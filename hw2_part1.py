@@ -1,3 +1,6 @@
+import pandas as pd
+import os
+
 class Student:
     free_students = set()
 
@@ -27,7 +30,21 @@ class Project:
         return bool(not self.main_student)
 
 
+def create_dataset(n) -> tuple:
+    grades_file_name = "data/grades_{0}.csv".format(n)
+    preference_file_name = "data/preferences_{0}.csv".format(n)
+    student_grades = pd.read_csv(grades_file_name)
+    preferences = pd.read_csv(preference_file_name)
+    students = []
+    projects = set(sum(preferences[preferences.columns[1:]].values.tolist(), []))
+    for index, student in student_grades.iterrows() :
+        students.append(Student(student['student_id'], preferences.loc[preferences['student_id'] == student['student_id']], student['math_grades'], student['cs_grades'], ""))
+    return students, projects
+
 def run_deferred_acceptance(n) -> dict:
+    students, projects = create_dataset(n)
+    print(students)
+    print(projects)
     return {1: 2, 2: 3, 3: 4, 4: 1, 5: 5}
 
 
