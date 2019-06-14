@@ -1,3 +1,6 @@
+from hw2_part1 import create_dataset
+import pandas as pd
+
 class Student:
     free_students = set()
 
@@ -26,16 +29,10 @@ class Project:
     def is_free(self):
         return bool(not self.main_student)
 
-
 def run_market_clearing(n):
     return {i: i for i in range(1, 6)}, {1: 1, 2: 0, 3: 1, 4: 0, 5: 0}
 
-
 def calc_total_welfare(matching_file, n) -> int:
-    if 'single' in matching_file:
-        result = 45
-    elif 'coupled' in matching_file:
-        result = 55
-    else:
-        result = 59
-    return result
+    students, projects = create_dataset(n)
+    matches = pd.read_csv(matching_file)
+    return sum(map(lambda value : students[int(value[1]['sid'])].utils[value[1]['pid']], matches.iterrows()))

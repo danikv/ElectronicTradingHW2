@@ -30,16 +30,20 @@ class Project:
         return bool(not self.main_student)
 
 
+def get_preferences(preferences):
+    return list(map(lambda item: item[0], sorted(preferences.items(), key=lambda x : x[1], reverse=True)))
+
 def create_dataset(n) -> tuple:
     grades_file_name = "data/grades_{0}.csv".format(n)
     preference_file_name = "data/preferences_{0}.csv".format(n)
     student_grades = pd.read_csv(grades_file_name)
     preferences = pd.read_csv(preference_file_name)
     students = {}
-    projects = dict(map(lambda x : (x, Project(x)), sum(preferences[preferences.columns[1:]].values.tolist(), [])))
+    projects = dict(map(lambda x : (int(x), Project(int(x))), preferences.columns[1:].values.tolist()))
     for index, student in student_grades.iterrows() :
+        utils = dict(map(lambda item: (int(item[0]), int(item[1])), preferences.loc[preferences['student_id'] == student['student_id']][preferences.columns[1:]].iteritems()))
         students[int(student['student_id'])] = Student(int(student['student_id']), 
-        sum(preferences.loc[preferences['student_id'] == student['student_id']][preferences.columns[1:]].values.tolist(), []), student['math_grades'], student['cs_grades'], "")
+        get_preferences(utils), student['math_grades'], student['cs_grades'], utils)
     return students, projects
 
 def studnt_without_project(students) -> Student:
@@ -75,8 +79,7 @@ def deferred_acceptance(students, projects):
             elif students[applications[pref]].math_grade < student.math_grade:
                 remove_and_assign(students, student, applications, pref)
                 break
-    reverse_matches = dict(filter(lambda value: value[1] != None, applications.items()))
-    matches = dict((v,k) for k,v in reverse_matches.items())
+    matches = dict(map(lambda item: (item[1], item[0]), filter(lambda value: value[1] != None, applications.items())))
     return matches
 
 def run_deferred_acceptance(n) -> dict:
@@ -121,4 +124,9 @@ def count_blocking_pairs(matching_file, n) -> int:
         print(match['sid'])
 
 def calc_total_welfare(matching_file, n) -> int:
-    return 73 if 'single' in matching_file else 63
+    students, projects = create_dataset(n)
+    matches = pd.read_csv(matching_file)
+    value_sum = 0
+    for index, value in matches.iterrows():
+        value_sum += students[int(value['sid'])].utils[value['pid']]
+    return int(value_sum)
