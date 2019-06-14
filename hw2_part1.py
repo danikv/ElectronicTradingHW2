@@ -126,7 +126,4 @@ def count_blocking_pairs(matching_file, n) -> int:
 def calc_total_welfare(matching_file, n) -> int:
     students, projects = create_dataset(n)
     matches = pd.read_csv(matching_file)
-    value_sum = 0
-    for index, value in matches.iterrows():
-        value_sum += students[int(value['sid'])].utils[value['pid']]
-    return int(value_sum)
+    return sum(map(lambda value : students[int(value[1]['sid'])].utils[value[1]['pid']], matches.iterrows()))
