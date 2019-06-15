@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import networkx as nx
+import copy
 
 class Student:
     free_students = set()
@@ -122,17 +123,15 @@ def run_deferred_acceptance_for_pairs(n) -> dict:
         matches[value] = matches[key]
     return matches
 
-def count_blocking_pairs(matching_file, n) -> int:
+def calculate_blocking_pairs(students, projects, matches) -> list:
     blocking_pairs = []
-    students, projects = create_dataset(n)
-    matches = pd.read_csv(matching_file)
-    for index, match in matches.iterrows() :
-        first_student = students[int(match['sid'])]
-        project_index = first_student.pref_list.index(match['pid'])
+    for sid, pid in matches.items() :
+        first_student = students[sid]
+        project_index = first_student.pref_list.index(pid)
         if project_index > 0:
             for second_student in filter(lambda x : x is not first_student, students.values()):
                 wanted_projects = first_student.pref_list[0: project_index]
-                second_studnet_project = projects[int(matches[matches['sid'] == second_student.sid]['pid'])]
+                second_studnet_project = projects[matches[second_student.sid]]
                 if second_studnet_project.pid in wanted_projects:
                     if second_studnet_project.grade_type == 'cs_grade':
                         if first_student.cs_grade > second_student.cs_grade:
@@ -140,16 +139,29 @@ def count_blocking_pairs(matching_file, n) -> int:
                     else:
                         if first_student.math_grade > second_student.math_grade:
                             blocking_pairs.append((first_student.sid, second_student.sid))
-    return int(len(list(filter(lambda student: (student[1], student[0]) in blocking_pairs, blocking_pairs)))/2)
+    return list(filter(lambda student: (student[1], student[0]) in blocking_pairs, blocking_pairs))
+
+def convert_matches_to_dict(matches) -> dict:
+    return dict(map(lambda x: (int(x[1]['sid']), int(x[1]['pid'])), matches.iterrows()))
+
+def count_blocking_pairs(matching_file, n) -> int:
+    students, projects = create_dataset(n)
+    matches = pd.read_csv(matching_file)
+    blocking_pairs = calculate_blocking_pairs(students, projects, convert_matches_to_dict(matches))
+    return int(len(blocking_pairs)/2)
+
+def calculate_total_welfare(students, projects, matches) -> int:
+    return sum(map(lambda value : students[value[0]].utils[value[1]], matches.items()))
 
 def calc_total_welfare(matching_file, n) -> int:
     students, projects = create_dataset(n)
     matches = pd.read_csv(matching_file)
-    return sum(map(lambda value : students[int(value[1]['sid'])].utils[value[1]['pid']], matches.iterrows()))
+    return calculate_total_welfare(students, projects, convert_matches_to_dict(matches))
 
 def part3(n):
     students, projects = create_dataset(n)
     merged_students = merge_pairs(n,students)
+    reversed_merged_students = dict(map(lambda item: (item[1], item[0]), merged_students.items()))
     graph = nx.Graph()
     graph.add_nodes_from(merged_students.keys(), bipartite=0)
     graph.add_nodes_from(map(lambda x : x + 200, projects.keys()), bipartite=1)
@@ -160,4 +172,20 @@ def part3(n):
     formated_matching = dict(map(lambda x : (x[1], x[0] - 200) if x[0] >= 200 else (x[0], x[1] - 200), matching))
     for key, value in merged_students.items() :
         formated_matching[value] = formated_matching[key]
+    #calc blocking pairs
+    blocking_pairs = calculate_blocking_pairs(students, projects, formated_matching)
+    starting_welfare = calculate_total_welfare(students, projects, formated_matching)
+    # #try to switch and calculate welfare
+    for first_student, second_student in blocking_pairs:
+        try_matching = copy.deepcopy(formated_matching)
+        first_student_project = formated_matching[first_student]
+        second_student_project = formated_matching[second_student]
+        try_matching[first_student] = second_student_project
+        try_matching[merged_students[first_student] if first_student in merged_students.keys() else reversed_merged_students[first_student]] = second_student_project
+        try_matching[second_student] = first_student_project
+        try_matching[merged_students[second_student] if second_student in merged_students.keys() else reversed_merged_students[second_student]] = first_student_project
+        try_welfare = calculate_total_welfare(students, projects, try_matching)
+        if try_welfare >= starting_welfare - 15:
+            formated_matching = try_matching
+            starting_welfare = try_welfare
     return formated_matching
