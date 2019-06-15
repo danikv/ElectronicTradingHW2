@@ -131,9 +131,8 @@ def count_blocking_pairs(matching_file, n) -> int:
         if project_index > 0:
             for second_student in filter(lambda x : x is not first_student, students.values()):
                 wanted_projects = first_student.pref_list[0: project_index]
-                first_student_project = projects[int(match['pid'])]
                 second_studnet_project = projects[int(matches[matches['sid'] == second_student.sid]['pid'])]
-                if second_studnet_project.pid in wanted_projects and second_studnet_project is not first_student_project:
+                if second_studnet_project.pid in wanted_projects:
                     if second_studnet_project.grade_type == 'cs_grade':
                         if first_student.cs_grade > second_student.cs_grade:
                             blocking_pairs[first_student.sid] = second_student.sid
