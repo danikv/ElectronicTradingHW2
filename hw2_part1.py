@@ -56,7 +56,7 @@ def remove_and_assign(students, student, applications, pref):
     assign_student_to_project(applications, pref, student)
 
 def remove_old_student_from_project(students, applications, pref):
-    students[applications[pref].student_id].project = None
+    students[applications[pref]].project = None
 
 def assign_student_to_project(applications, pref, student):
     student.project = pref
@@ -86,7 +86,15 @@ def run_deferred_acceptance(n) -> dict:
     students, projects = create_dataset(n)
     return deferred_acceptance(students, projects)
 
-def merge_pairs(n, students):
+def merge_students(students, pair) -> tuple:
+    first_student = students[pair['partner_1']]
+    second_student = students[pair['partner_2']]
+    if first_student.math_grade + first_student.cs_grade > second_student.math_grade + second_student.cs_grade:
+        return first_student.sid, second_student.sid
+    else :
+        return second_student.sid, first_student.sid
+
+def merge_pairs(n, students) -> dict:
     merge_pair_file_name = "data/pairs_{0}.csv".format(n)
     pairs = pd.read_csv(merge_pair_file_name)
     merged_pairs = {}
@@ -101,12 +109,8 @@ def merge_pairs(n, students):
             first_student = students[pair['partner_1']]
             merged_pairs[first_student.sid] = first_student.sid
             continue
-        first_student = students[pair['partner_1']]
-        second_student = students[pair['partner_2']]
-        if first_student.math_grade + first_student.cs_grade > second_student.math_grade + second_student.cs_grade:
-            merged_pairs[first_student.sid] = second_student.sid
-        else :
-            merged_pairs[second_student.sid] = first_student.sid
+        student_id, merged_student_id = merge_students(students, pair)
+        merged_pairs[student_id] = merged_student_id
     return merged_pairs
 
 def run_deferred_acceptance_for_pairs(n) -> dict:
@@ -118,10 +122,25 @@ def run_deferred_acceptance_for_pairs(n) -> dict:
     return matches
 
 def count_blocking_pairs(matching_file, n) -> int:
+    blocking_pairs = {}
     students, projects = create_dataset(n)
     matches = pd.read_csv(matching_file)
     for index, match in matches.iterrows() :
-        print(match['sid'])
+        first_student = students[int(match['sid'])]
+        project_index = first_student.pref_list.index(match['pid'])
+        if project_index > 0:
+            for second_student in filter(lambda x : x is not first_student, students.values()):
+                wanted_projects = first_student.pref_list[0: project_index]
+                first_student_project = projects[int(match['pid'])]
+                second_studnet_project = projects[int(matches[matches['sid'] == second_student.sid]['pid'])]
+                if second_studnet_project.pid in wanted_projects and second_studnet_project is not first_student_project:
+                    if second_studnet_project.grade_type == 'cs_grade':
+                        if first_student.cs_grade > second_student.cs_grade:
+                            blocking_pairs[first_student.sid] = second_student.sid
+                    else:
+                        if first_student.math_grade > second_student.math_grade:
+                            blocking_pairs[first_student.sid] = second_student.sid
+    return int(len(list(filter(lambda student: student[1] in blocking_pairs.keys(), blocking_pairs.items())))/2)
 
 def calc_total_welfare(matching_file, n) -> int:
     students, projects = create_dataset(n)
