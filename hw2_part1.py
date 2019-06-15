@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import networkx as nx
-import copy
 
 class Student:
     free_students = set()
@@ -18,7 +17,6 @@ class Student:
     def is_free(self):
         return bool(not self.project)
 
-
 class Project:
     def __init__(self, pid):
         self.pid = pid
@@ -30,7 +28,6 @@ class Project:
 
     def is_free(self):
         return bool(not self.main_student)
-
 
 def get_preferences(preferences):
     return list(map(lambda item: item[0], sorted(preferences.items(), key=lambda x : x[1], reverse=True)))
@@ -161,7 +158,6 @@ def calc_total_welfare(matching_file, n) -> int:
 def part3(n):
     students, projects = create_dataset(n)
     merged_students = merge_pairs(n,students)
-    reversed_merged_students = dict(map(lambda item: (item[1], item[0]), merged_students.items()))
     graph = nx.Graph()
     graph.add_nodes_from(merged_students.keys(), bipartite=0)
     graph.add_nodes_from(map(lambda x : x + 200, projects.keys()), bipartite=1)
@@ -172,20 +168,4 @@ def part3(n):
     formated_matching = dict(map(lambda x : (x[1], x[0] - 200) if x[0] >= 200 else (x[0], x[1] - 200), matching))
     for key, value in merged_students.items() :
         formated_matching[value] = formated_matching[key]
-    #calc blocking pairs
-    # blocking_pairs = calculate_blocking_pairs(students, projects, formated_matching)
-    # starting_welfare = calculate_total_welfare(students, projects, formated_matching)
-    # try to switch and calculate welfare
-    # for first_student, second_student in blocking_pairs:
-    #     try_matching = copy.deepcopy(formated_matching)
-    #     first_student_project = formated_matching[first_student]
-    #     second_student_project = formated_matching[second_student]
-    #     try_matching[first_student] = second_student_project
-    #     try_matching[merged_students[first_student] if first_student in merged_students.keys() else reversed_merged_students[first_student]] = second_student_project
-    #     try_matching[second_student] = first_student_project
-    #     try_matching[merged_students[second_student] if second_student in merged_students.keys() else reversed_merged_students[second_student]] = first_student_project
-    #     try_welfare = calculate_total_welfare(students, projects, try_matching)
-    #     if try_welfare >= starting_welfare - 15:
-    #         formated_matching = try_matching
-    #         starting_welfare = try_welfare
     return formated_matching
