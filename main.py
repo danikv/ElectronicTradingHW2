@@ -1,7 +1,7 @@
 import pandas as pd
 from time import time
 
-from hw2_part1 import run_deferred_acceptance, run_deferred_acceptance_for_pairs, count_blocking_pairs
+from hw2_part1 import run_deferred_acceptance, run_deferred_acceptance_for_pairs, count_blocking_pairs, part3
 from hw2_part2 import run_market_clearing, calc_total_welfare
 
 
@@ -34,17 +34,22 @@ def main(n):
     print(f'Total welfare from the coupled matching: {welfare_2}')
     print(f'Number of blocking pairs from coupled matching: {block_pairs_2}')
 
-    matching_dict_3, prices_dict = run_market_clearing(n)
-    write_matching(matching_dict_3, 'mcp', n)
-    write_projects_prices(prices_dict, n)
-    welfare_3 = calc_total_welfare(f'matching_task_mcp_data_{n}.csv', n)
-    print(f'Total welfare from the MCP matching: {welfare_3}')
-
+    #matching_dict_3, prices_dict = run_market_clearing(n)
+    #write_matching(matching_dict_3, 'mcp', n)
+    #write_projects_prices(prices_dict, n)
+    #welfare_3 = calc_total_welfare(f'matching_task_mcp_data_{n}.csv', n)
+    #print(f'Total welfare from the MCP matching: {welfare_3}')
+    matching_dict4 = part3(n)
+    write_matching(matching_dict4, 'part3', n)
+    block_pairs_4 = count_blocking_pairs(f'matching_task_part3_data_{n}.csv', n)
+    welfare_4 = calc_total_welfare(f'matching_task_part3_data_{n}.csv', n)
+    print(f'Total welfare from the part3 matching: {welfare_4}')
+    print(f'Number of blocking pairs from coupled matching: {block_pairs_4}')
 
 if __name__ == '__main__':
     x = time()
-    #for i in range(1, 5):
-        #main(i)
-    main('test')
+    for i in range(1, 5):
+        main(i)
+    #main('test')
     #main('test_mc')
     print(f'Running time: {time() - x} sec')

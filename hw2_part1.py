@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import networkx as nx
 
 class Student:
     free_students = set()
@@ -145,3 +146,18 @@ def calc_total_welfare(matching_file, n) -> int:
     students, projects = create_dataset(n)
     matches = pd.read_csv(matching_file)
     return sum(map(lambda value : students[int(value[1]['sid'])].utils[value[1]['pid']], matches.iterrows()))
+
+def part3(n):
+    students, projects = create_dataset(n)
+    merged_students = merge_pairs(n,students)
+    graph = nx.Graph()
+    graph.add_nodes_from(merged_students.keys(), bipartite=0)
+    graph.add_nodes_from(map(lambda x : x + 200, projects.keys()), bipartite=1)
+    for student, merged_student in merged_students.items():
+        for project, score in students[student].utils.items():
+            graph.add_edge(student, project + 200, weight=score + students[merged_student].utils[project])
+    matching = nx.max_weight_matching(graph)
+    formated_matching = dict(map(lambda x : (x[1], x[0] - 200) if x[0] >= 200 else (x[0], x[1] - 200), matching))
+    for key, value in merged_students.items() :
+        formated_matching[value] = formated_matching[key]
+    return formated_matching
