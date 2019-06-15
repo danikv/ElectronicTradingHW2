@@ -173,19 +173,19 @@ def part3(n):
     for key, value in merged_students.items() :
         formated_matching[value] = formated_matching[key]
     #calc blocking pairs
-    blocking_pairs = calculate_blocking_pairs(students, projects, formated_matching)
-    starting_welfare = calculate_total_welfare(students, projects, formated_matching)
-    # #try to switch and calculate welfare
-    for first_student, second_student in blocking_pairs:
-        try_matching = copy.deepcopy(formated_matching)
-        first_student_project = formated_matching[first_student]
-        second_student_project = formated_matching[second_student]
-        try_matching[first_student] = second_student_project
-        try_matching[merged_students[first_student] if first_student in merged_students.keys() else reversed_merged_students[first_student]] = second_student_project
-        try_matching[second_student] = first_student_project
-        try_matching[merged_students[second_student] if second_student in merged_students.keys() else reversed_merged_students[second_student]] = first_student_project
-        try_welfare = calculate_total_welfare(students, projects, try_matching)
-        if try_welfare >= starting_welfare - 15:
-            formated_matching = try_matching
-            starting_welfare = try_welfare
+    # blocking_pairs = calculate_blocking_pairs(students, projects, formated_matching)
+    # starting_welfare = calculate_total_welfare(students, projects, formated_matching)
+    # try to switch and calculate welfare
+    # for first_student, second_student in blocking_pairs:
+    #     try_matching = copy.deepcopy(formated_matching)
+    #     first_student_project = formated_matching[first_student]
+    #     second_student_project = formated_matching[second_student]
+    #     try_matching[first_student] = second_student_project
+    #     try_matching[merged_students[first_student] if first_student in merged_students.keys() else reversed_merged_students[first_student]] = second_student_project
+    #     try_matching[second_student] = first_student_project
+    #     try_matching[merged_students[second_student] if second_student in merged_students.keys() else reversed_merged_students[second_student]] = first_student_project
+    #     try_welfare = calculate_total_welfare(students, projects, try_matching)
+    #     if try_welfare >= starting_welfare - 15:
+    #         formated_matching = try_matching
+    #         starting_welfare = try_welfare
     return formated_matching
