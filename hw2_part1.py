@@ -123,7 +123,7 @@ def run_deferred_acceptance_for_pairs(n) -> dict:
     return matches
 
 def count_blocking_pairs(matching_file, n) -> int:
-    blocking_pairs = {}
+    blocking_pairs = []
     students, projects = create_dataset(n)
     matches = pd.read_csv(matching_file)
     for index, match in matches.iterrows() :
@@ -136,11 +136,11 @@ def count_blocking_pairs(matching_file, n) -> int:
                 if second_studnet_project.pid in wanted_projects:
                     if second_studnet_project.grade_type == 'cs_grade':
                         if first_student.cs_grade > second_student.cs_grade:
-                            blocking_pairs[first_student.sid] = second_student.sid
+                            blocking_pairs.append((first_student.sid, second_student.sid))
                     else:
                         if first_student.math_grade > second_student.math_grade:
-                            blocking_pairs[first_student.sid] = second_student.sid
-    return int(len(list(filter(lambda student: student[1] in blocking_pairs.keys(), blocking_pairs.items())))/2)
+                            blocking_pairs.append((first_student.sid, second_student.sid))
+    return int(len(list(filter(lambda student: (student[1], student[0]) in blocking_pairs, blocking_pairs)))/2)
 
 def calc_total_welfare(matching_file, n) -> int:
     students, projects = create_dataset(n)
