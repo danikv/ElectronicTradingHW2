@@ -163,7 +163,7 @@ def part3(n):
     graph.add_nodes_from(map(lambda x : x + 200, projects.keys()), bipartite=1)
     for student, merged_student in merged_students.items():
         for project, score in students[student].utils.items():
-            graph.add_edge(student, project + 200, weight=score + students[merged_student].utils[project])
+            graph.add_edge(student, project + 200, weight=score + students[merged_student].utils[project] + 2)
     matching = nx.max_weight_matching(graph)
     formated_matching = dict(map(lambda x : (x[1], x[0] - 200) if x[0] >= 200 else (x[0], x[1] - 200), matching))
     for key, value in merged_students.items() :
