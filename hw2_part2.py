@@ -1,8 +1,7 @@
-from hw2_part1 import create_dataset
+from hw2_part1 import create_dataset, get_preferences
 import pandas as pd
 import networkx as nx
 from itertools import combinations
-import collections
 
 class Student:
     free_students = set()
@@ -19,7 +18,6 @@ class Student:
     def is_free(self):
         return bool(not self.project)
 
-
 class Project:
     def __init__(self, pid):
         self.pid = pid
@@ -32,36 +30,34 @@ class Project:
     def is_free(self):
         return bool(not self.main_student)
 
-def alternating_bfs(graph, root):
-    #pick unmatched root and start searching
-    visited, queue = set(), collections.deque([root])
-    while queue: 
-        vertex = queue.popleft()
-        for neighbour in nx.neighbors(graph, vertex): 
-            if neighbour not in visited: 
-                visited.add(neighbour)
-                queue.append(neighbour) 
+def minimal_constrined_set(matches):
+    for e1, e2 in combinations(matches, 2):
+        if len(set(e1) & set(e2)) != 0:
+            return e1[1]
+
+def is_perfect_matching(matches):
+    return all(len(set(e1) & set(e2)) == 0
+               for e1, e2 in combinations(matches, 2))
+
+def calculate_matching(students):
+    return list(map(lambda student: (student[0], student[1].pref_list[0] + 200), students.items()))
 
 def run_market_clearing(n):
     students, projects = create_dataset(n)
     prices = dict(map(lambda x : (x,0) , projects.keys()))
-    graph = nx.Graph()
-    graph.add_nodes_from(students.keys(), bipartite=0)
-    graph.add_nodes_from(map(lambda x : x + 200, projects.keys()), bipartite=1)
-    for student_id in students.keys():
-        for project, score in students[student_id].utils.items():
-            graph.add_edge(student_id, project + 200, weight=score)
     while True:
-        matching = nx.max_weight_matching(graph)
-        if nx.is_perfect_matching(graph,matching):
-            print('perfect')
-        return dict(map(lambda x : (x[1], x[0] - 200) if x[0] >= 200 else (x[0], x[1] - 200), matching)), prices
-        #return matching, prices
-        #find minimal constirned set
-
+        matching = calculate_matching(students)
+        if is_perfect_matching(matching):
+            return dict(map(lambda x : (x[0], x[1] - 200), matching)), prices
+        #find minimal constrined set
+        constrined_set = minimal_constrined_set(matching)
         #increase sellers prices by 1
-        # if all sellers increased thier prices , then decrease their price by 1
-        # try to find perfect matching agian   
+        #for pid in constrined_set:
+        prices[constrined_set - 200] += 1
+        for sid, student in students.items():
+            student.utils[constrined_set - 200] -= 1
+            student.pref_list = get_preferences(student.utils)
+        # if all sellers increased thier prices , then decrease their price by 1, not sure where to put that
 
 def calc_total_welfare(matching_file, n) -> int:
     students, projects = create_dataset(n)
