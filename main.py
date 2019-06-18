@@ -51,5 +51,5 @@ if __name__ == '__main__':
     for i in range(1, 5):
         main(i)
     #main('test')
-    #main('test_mc')
+    main('test_mc')
     print(f'Running time: {time() - x} sec')
