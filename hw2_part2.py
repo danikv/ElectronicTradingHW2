@@ -43,14 +43,26 @@ def is_perfect_matching(matches):
     return all(len(set(e1) & set(e2)) == 0
                for e1, e2 in combinations(matches, 2))
 
-def get_random_preference(student):
-    higest_preference_rank = student.utils[student.pref_list[0]]
-    same_preferences_size = len(list(filter(lambda util : util==higest_preference_rank ,student.utils.values())))
-    random.seed()
-    return student.pref_list[0] if same_preferences_size == 1 else student.pref_list[random.randint(0, same_preferences_size - 1)]
+def number_of_higest_preferences(student):
+    return len(list(filter(lambda util : util==student.utils[student.pref_list[0]] ,student.utils.values())))
 
 def calculate_matching(students):
-    return list(map(lambda student: (student[0], get_random_preference(student[1]) + 200), students.items()))
+    previosly_selected_projects = set()
+    matching = set()
+    for sid, student in sorted(students.items(), key=lambda x : number_of_higest_preferences(x[1])):
+        higest_preferences_size = number_of_higest_preferences(student)
+        if higest_preferences_size == 1:
+            matching.add((sid, student.pref_list[0] + 200))
+            previosly_selected_projects.add(student.pref_list[0])
+        elif len(set(student.pref_list[0:higest_preferences_size]).intersection(previosly_selected_projects)) != higest_preferences_size:
+            preference_pid = set(student.pref_list[0:higest_preferences_size]).difference(previosly_selected_projects).pop()
+            matching.add((sid, preference_pid + 200))
+            previosly_selected_projects.add(preference_pid)
+        else :
+            preference_pid = set(student.pref_list[0:higest_preferences_size]).pop()
+            matching.add((sid, preference_pid + 200))
+            previosly_selected_projects.add(preference_pid)
+    return matching
 
 def run_market_clearing(n):
     students, projects = create_dataset(n)
@@ -62,8 +74,6 @@ def run_market_clearing(n):
         #find minimal constrined set
         constrined_set = minimal_constrined_set(matching)
         #increase sellers prices by 1
-        #for pid in constrined_set:
-        print(constrined_set)
         for pid in constrined_set:
             prices[pid - 200] += 1
             for sid, student in students.items():
